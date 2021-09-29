@@ -3,6 +3,8 @@ use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use tokio_postgres::NoTls;
 
+mod otx;
+
 static OTX_DEFAULT_EXCHANGE: &str = "https://otx.alienvault.com";
 
 pub struct QueryParameters {
@@ -13,7 +15,6 @@ pub struct QueryParameters {
 }
 
 impl QueryParameters {
-    // pub fn to_vec(&self) -> Vec<(&str, &str)> {
     pub fn to_vec(&self) -> Vec<(String, String)> {
         let mut vec = Vec::new();
         match &self.limit {
@@ -108,7 +109,9 @@ impl Client {
     }
 }
 
-async fn add_indicator_db(indicator: &Indicator) -> Result<u64, Box<dyn std::error::Error>> {
+async fn add_indicator_db(
+    indicator: &otx::otx::Indicator,
+) -> Result<u64, Box<dyn std::error::Error>> {
     let (client, connection) =
         tokio_postgres::connect("host=localhost user=fredlhsu ", NoTls).await?;
 
@@ -128,8 +131,8 @@ async fn add_indicator_db(indicator: &Indicator) -> Result<u64, Box<dyn std::err
         .await?)
 }
 
-async fn pub_indicators_nats(indicator: &Indicator) -> std::io::Result<()> {
-    let nats_url = "localhost";
+async fn pub_indicators_nats(indicator: &otx::otx::Indicator) -> std::io::Result<()> {
+    let nats_url = "10.90.226.89:32000";
     let nc = async_nats::Options::with_user_pass("ruser", "T0pS3cr3t")
         .with_name("otx-incidents")
         .connect(nats_url)
@@ -144,8 +147,9 @@ async fn pub_indicators_nats(indicator: &Indicator) -> std::io::Result<()> {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let api = "6d69f7223d1c7d7f53b16270e1d7d3b9c87c3c0a5c78e00bfc0c4ac788d82e13".to_string();
-    let client = Client::new(api)?;
-    let query = QueryParameters {
+    let client = otx::otx::Client::new(api)?;
+    // let client = Client::new(api)?;
+    let query = otx::otx::QueryParameters {
         modified_since: Some("2021-09-01T12:35:00+00:00".to_string()),
         limit: Some(10),
         types: Some(vec!["IPv4".to_string()]),
