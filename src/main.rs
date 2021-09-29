@@ -1,6 +1,6 @@
 use tokio_postgres::NoTls;
 
-mod otx;
+pub mod otx;
 
 async fn add_indicator_db(
     indicator: &otx::otx::Indicator,
