@@ -1,7 +1,5 @@
 use tokio_postgres::NoTls;
 
-pub mod otx;
-
 async fn add_indicator_db(
     indicator: &otx::otx::Indicator,
 ) -> Result<u64, Box<dyn std::error::Error>> {
